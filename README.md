@@ -105,7 +105,7 @@ El frontend en desarrollo hace proxy de `/api` → `http://localhost:3001`.
 | `GET` | `/api/auth/me` | Perfil del usuario autenticado |
 
 Las rutas protegidas requieren:
-- Cabecera `Authorization: ******
+- Cabecera `Authorization: ****** donde `<jwt>` es el token devuelto por el login
 - Cabecera `X-Tenant-Slug: <slug>`
 
 ### Pacientes

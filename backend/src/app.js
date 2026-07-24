@@ -48,7 +48,6 @@ app.use('/api/usuarios', apiLimiter, usuariosRoutes);
 app.use((_req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
 
 // Global error handler
-// eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: 'Error interno del servidor' });
