@@ -66,6 +66,32 @@ commit hecho). Falta conectarlo a GitHub:
 5. Recarga la pagina de tu repositorio en GitHub: deberias ver todos los
    archivos del proyecto ahi.
 
+### Si `git push` es rechazado ("fetch first" / "Updates were rejected")
+
+Pasa cuando el repositorio de GitHub ya tenia algo (por ejemplo, marcaste
+por accidente alguna casilla de "Add a README" al crearlo, o ya lo habias
+usado antes para otra cosa). **No hagas `push --force` a ciegas** — primero
+inspecciona que hay en el remoto para no perder nada:
+
+```bash
+# Ver que hay en el remoto sin tocar nada local todavia
+git fetch origin
+git log origin/main --oneline -20
+git ls-tree -r origin/main --name-only
+```
+
+Si esos comandos muestran que el remoto no tiene nada de valor (por
+ejemplo, solo un `README.md` vacio generado por GitHub), es seguro combinar
+los dos historiales y volver a subir:
+
+```bash
+git pull origin main --allow-unrelated-histories --no-edit
+git push origin main
+```
+
+Si en cambio el remoto muestra archivos o commits que si te importan,
+detente y revisalos con calma (`git show <hash>`) antes de decidir como
+combinarlos.
 ---
 
 ## Paso 1: Crear el proyecto en Railway

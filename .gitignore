@@ -27,3 +27,6 @@ Thumbs.db
 
 # Local data
 mysql_data/
+
+# Llaves privadas SSH (ej. descargadas de AWS EC2) - nunca deben commitearse
+*.pem

@@ -270,6 +270,24 @@ docker compose -f docker-compose.prod.yml logs -f backend
 
 (Presiona `Ctrl+C` para salir de los logs sin detener la aplicacion.)
 
+## Otros comandos utiles para debuguear
+
+Si algo no carga o falla, estos comandos ayudan a diagnosticar:
+
+```bash
+# Ver el valor de CORS_ORIGINS que quedo escrito en el archivo .env
+cat .env | grep CORS_ORIGINS
+
+# Ver el valor que el contenedor del backend esta usando REALMENTE en este
+# momento (si no coincide con el de arriba, el contenedor esta desactualizado
+# y hace falta recrearlo con el comando de abajo)
+docker compose -f docker-compose.prod.yml exec backend printenv CORS_ORIGINS
+
+# Recrear solo el backend despues de editar .env (no hace falta tocar
+# frontend ni mysql si no cambiaste nada de ellos)
+docker compose -f docker-compose.prod.yml up -d --build backend
+```
+
 ## Paso 9: Verificar que funciona
 
 1. Desde tu propio computador (no la terminal de EC2), abre en el
