@@ -36,7 +36,14 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        # El navegador manda el header Origin sin barra final; si CORS_ORIGINS
+        # trae una barra final por error de configuracion, la comparacion
+        # exacta de CORSMiddleware nunca coincide y bloquea todo en silencio.
+        return [
+            origin.strip().rstrip("/")
+            for origin in self.cors_origins.split(",")
+            if origin.strip()
+        ]
 
 
 @lru_cache
