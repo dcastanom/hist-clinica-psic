@@ -273,9 +273,15 @@ docker compose -f docker-compose.prod.yml logs -f backend
 ## Paso 9: Verificar que funciona
 
 1. Desde tu propio computador (no la terminal de EC2), abre en el
-   navegador: `http://TU-IP-PUBLICA/api/v1/health` — deberia mostrar
-   `{"status":"ok"}`.
-2. Abre `http://TU-IP-PUBLICA/` — deberia cargar la aplicacion.
+   navegador: `http://TU-IP-PUBLICA:8000/api/v1/health` — **con el puerto
+   `:8000`**, porque esa ruta vive en el backend, no en el frontend.
+   Deberia mostrar `{"status":"ok"}`. Si la abres sin el puerto (osea en
+   el 80, donde esta el frontend), la propia aplicacion te va a redirigir
+   al login, porque el frontend no reconoce esa ruta como una pantalla
+   propia — no es un error, simplemente estarias probando el servicio
+   equivocado.
+2. Abre `http://TU-IP-PUBLICA/` (sin puerto, el 80 por defecto) — deberia
+   cargar la aplicacion.
 3. Inicia sesion con el usuario administrador de prueba:
    - Email: `admin@example.com`
    - Password: `Admin12345!`
