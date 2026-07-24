@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
@@ -14,13 +14,14 @@ export default function SesionDetalle() {
   const [saving, setSaving] = useState(false);
   const [updatingEstado, setUpdatingEstado] = useState(false);
 
-  const fetchSesion = () =>
+  const fetchSesion = useCallback(() =>
     api.get(`/sesiones/${id}`).then((res) => {
       setSesion(res.data);
       setNotas(res.data.notasClinicas || []);
-    }).catch(() => navigate('/sesiones'));
+    }).catch(() => navigate('/sesiones')),
+  [id, navigate]);
 
-  useEffect(() => { fetchSesion(); }, [id]);
+  useEffect(() => { fetchSesion(); }, [fetchSesion]);
 
   const handleCambiarEstado = async (estado) => {
     setUpdatingEstado(true);

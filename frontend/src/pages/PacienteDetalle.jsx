@@ -32,7 +32,7 @@ export default function PacienteDetalle() {
         motivoConsulta: res.data.motivoConsulta || '',
       });
     }).catch(() => navigate('/pacientes'));
-  }, [id, navigate]);
+  }, [id]);
 
   const handleSave = async (e) => {
     e.preventDefault();
