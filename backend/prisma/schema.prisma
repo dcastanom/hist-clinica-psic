@@ -1,0 +1,103 @@
+// Prisma schema – Historia Clínica Psicológica (multi-tenant)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Multi-tenancy root ───────────────────────────────────────────────────────
+
+model Tenant {
+  id        String   @id @default(cuid())
+  nombre    String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usuarios  Usuario[]
+  pacientes Paciente[]
+}
+
+// ─── Users (psychologists / admins per tenant) ────────────────────────────────
+
+model Usuario {
+  id           String   @id @default(cuid())
+  tenantId     String
+  email        String
+  passwordHash String
+  nombre       String
+  apellido     String
+  rol          String   @default("PSICOLOGO")
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sesiones Sesion[]
+
+  @@unique([tenantId, email])
+}
+
+// ─── Patients ────────────────────────────────────────────────────────────────
+
+model Paciente {
+  id              String    @id @default(cuid())
+  tenantId        String
+  nombre          String
+  apellido        String
+  fechaNacimiento DateTime?
+  dni             String?
+  email           String?
+  telefono        String?
+  direccion       String?
+  motivoConsulta  String?
+  activo          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sesiones Sesion[]
+}
+
+// ─── Sessions / Appointments ──────────────────────────────────────────────────
+
+model Sesion {
+  id          String   @id @default(cuid())
+  tenantId    String
+  pacienteId  String
+  usuarioId   String
+  fecha       DateTime
+  duracion    Int      @default(50)
+  modalidad   String   @default("PRESENCIAL")
+  estado      String   @default("PROGRAMADA")
+  observacion String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  paciente      Paciente      @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  usuario       Usuario       @relation(fields: [usuarioId], references: [id])
+  notasClinicas NotaClinica[]
+
+  @@index([tenantId, pacienteId])
+  @@index([tenantId, usuarioId])
+}
+
+// ─── Clinical Notes ───────────────────────────────────────────────────────────
+
+model NotaClinica {
+  id        String   @id @default(cuid())
+  tenantId  String
+  sesionId  String
+  contenido String
+  etiquetas String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sesion Sesion @relation(fields: [sesionId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, sesionId])
+}

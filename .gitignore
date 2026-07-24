@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+.npm/
+
+# Build output
+frontend/dist/
+backend/dist/
+
+# Environment / secrets
+backend/.env
+backend/prisma/dev.db
+backend/prisma/dev.db-journal
+backend/prisma/migrations/
+
+# Test databases
+/tmp/*.db
+
+# OS / editor
+.DS_Store
+.vscode/
+*.swp
