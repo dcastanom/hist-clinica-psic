@@ -146,6 +146,18 @@ docker compose version
 Si el ultimo comando muestra un numero de version (ej. `Docker Compose
 version v2...`), Docker quedo instalado correctamente.
 
+Tambien hace falta instalar `buildx` (el motor que usa `docker compose
+build`), porque Amazon Linux 2023 no lo trae preinstalado y sin el vas a
+ver el error `compose build requires buildx 0.17.0 or later` cuando mas
+adelante ejecutes `docker compose ... up --build`:
+
+```bash
+BUILDX_URL=$(curl -s https://api.github.com/repos/docker/buildx/releases/latest | grep "browser_download_url.*linux-amd64\"" | cut -d '"' -f 4)
+curl -SL "$BUILDX_URL" -o ~/.docker/cli-plugins/docker-buildx
+chmod +x ~/.docker/cli-plugins/docker-buildx
+docker buildx version
+```
+
 ## Paso 5: Agregar un poco de memoria de intercambio (swap)
 
 La instancia gratuita tiene solo 1 GB de RAM, lo cual es justo para correr
@@ -318,6 +330,11 @@ distinta en "Network settings" -> "Subnet".
 Revisa los logs: `docker compose -f docker-compose.prod.yml logs backend`.
 Casi siempre es un error de `DATABASE_URL` en `.env` (usuario/contrasena
 no coinciden con `MYSQL_USER`/`MYSQL_PASSWORD`).
+
+**`compose build requires buildx 0.17.0 or later`**
+Falta instalar el plugin `buildx` (Amazon Linux 2023 no lo trae por
+defecto). Sigue las instrucciones al final del Paso 4 para instalarlo, y
+vuelve a correr `docker compose -f docker-compose.prod.yml up -d --build`.
 
 **La pagina carga pero al iniciar sesion da error de red**
 Revisa que `CORS_ORIGINS` en `.env` sea exactamente `http://TU-IP-PUBLICA`
