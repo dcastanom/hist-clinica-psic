@@ -323,11 +323,67 @@ docker compose -f docker-compose.prod.yml up -d --build
   state" -> **"Stop instance"**. Deja de cobrarse el computo; el disco
   (con tus datos de MySQL) se mantiene y se sigue cobrando un monto muy
   pequeno de almacenamiento. Al volver a **"Start instance"**, la IP
-  publica puede cambiar (repite el Paso 7 con la IP nueva si es asi).
+  publica puede cambiar (ver la seccion siguiente).
 - **Borrar todo permanentemente**: "Instance state" -> **"Terminate
   instance"**. Esto borra la maquina y sus discos — **se pierden los
   datos de MySQL que no hayas respaldado**. Usalo solo si ya no vas a
   necesitar nada de este despliegue.
+
+## Que pasa si detengo la instancia y la vuelvo a iniciar mas adelante
+
+Al hacer **"Stop"** y despues **"Start"** (por ejemplo, para volver a usar
+la app despues de varios dias sin tocarla), **no hace falta repetir todo
+el manual**. Esto es lo que persiste solo, sin que tengas que hacer nada:
+
+- Docker, el codigo clonado, el archivo `.env`, las imagenes ya
+  construidas y el swap del Paso 5 — todo vive en el disco de la
+  instancia, que **no se borra** al hacer "Stop" (solo se borra con
+  "Terminate").
+- Los contenedores (`mysql`, `backend`, `frontend`) tienen
+  `restart: unless-stopped` en `docker-compose.prod.yml`, asi que cuando
+  la instancia arranca de nuevo, Docker los levanta **solos** — no hace
+  falta correr `docker compose up` a mano.
+- Los datos de MySQL (pacientes, usuarios, etc.) persisten intactos.
+
+**Lo unico que si cambia**: la IP publica. AWS asigna una IP nueva cada
+vez que inicias una instancia detenida (a menos que reserves una IP fija,
+ver el tip al final). Como `CORS_ORIGINS` y `VITE_API_BASE_URL` en tu
+`.env` quedan con la IP *vieja* escrita, la aplicacion deja de funcionar
+con el mismo sintoma de CORS que se explica mas abajo en "Solucion de
+problemas comunes", hasta que actualices esos dos valores.
+
+Entonces, al volver a iniciar la instancia despues de un tiempo detenida:
+
+1. En la consola de EC2, anota la nueva **"Public IPv4 address"**.
+2. Conectate (Paso 3) y edita `.env`:
+
+   ```bash
+   cd hist-clinica-psic
+   nano .env
+   ```
+
+   Actualiza `CORS_ORIGINS` y `VITE_API_BASE_URL` con la IP nueva (mismo
+   formato que en el Paso 7).
+
+3. Reconstruye para que los cambios tomen efecto:
+
+   ```bash
+   docker compose -f docker-compose.prod.yml up -d --build
+   ```
+
+Con esos 3 pasos cortos alcanza — no hay que reinstalar Docker, volver a
+clonar el repositorio, ni configurar el swap de nuevo.
+
+> **Tip para no tener que hacer esto cada vez**: si reservas una
+> **"Elastic IP"** en AWS (EC2 -> "Elastic IPs" -> "Allocate Elastic IP
+> address") y la asocias a tu instancia ("Actions" -> "Associate Elastic IP
+> address"), la IP publica queda fija para siempre mientras este asociada
+> a una instancia corriendo (sin costo extra en ese caso). Asi ni siquiera
+> hace falta tocar el `.env` al reiniciar. Ojo: una Elastic IP asociada a
+> una instancia **detenida** (Stopped) si genera un cargo pequeno por
+> hora, precisamente para desincentivar reservar IPs sin usarlas — si vas
+> a dejar la instancia detenida por mucho tiempo y no te importa que la IP
+> cambie, es mas barato no reservarla.
 
 ---
 
