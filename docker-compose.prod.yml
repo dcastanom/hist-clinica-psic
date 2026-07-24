@@ -1,0 +1,62 @@
+# Compose de PRODUCCION, usado por MANUAL-DESPLIEGUE-NUBE-AWS.md en la
+# instancia EC2. Diferencias frente a docker-compose.yml (desarrollo local):
+#   - El backend corre desde la imagen ya construida (sin --reload, sin
+#     montar el codigo como volumen: el codigo queda "horneado" dentro de
+#     la imagen, como corresponde en produccion).
+#   - El frontend se compila a estatico y se sirve con nginx en el puerto 80
+#     (frontend/Dockerfile.prod), en vez de correr el servidor de
+#     desarrollo de Vite.
+#   - MySQL no expone su puerto al host: solo el backend le habla, por la
+#     red interna de Docker (nadie mas necesita conectarse a el desde
+#     afuera de esta maquina).
+#
+# Uso: docker compose -f docker-compose.prod.yml up -d --build
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: hist-clinica-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-hist_clinica_psic}
+      MYSQL_USER: ${MYSQL_USER:-hist_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-hist_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    image: hist-clinica-psic-backend:prod
+    container_name: hist-clinica-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api/v1}
+    image: hist-clinica-psic-frontend:prod
+    container_name: hist-clinica-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:

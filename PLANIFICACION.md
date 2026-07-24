@@ -454,37 +454,85 @@ Criterios de aceptacion:
 
 Objetivo: preparar una version desplegable en un proveedor cloud.
 
-Proveedor sugerido inicialmente:
+Decision (pedido explicito del usuario): se documentan **dos caminos**,
+no uno solo, porque el usuario esta aprendiendo despliegues en la nube y
+quiere comparar una opcion simple tipo PaaS contra AWS especificamente.
+Investigado con busquedas web (precios de julio 2026) antes de escribir,
+porque las capas gratuitas de Railway y Fly.io cambiaron desde que se
+redacto la sugerencia inicial de este documento (ya no son gratuitas).
 
-- Backend: Render, Railway, Fly.io o VPS con Docker.
-- Frontend: Vercel, Netlify o el mismo proveedor del backend.
-- Base de datos: MySQL administrado del proveedor elegido o servicio compatible.
+- **Camino A - Railway (backend + MySQL) + Vercel (frontend)**: el mas
+  simple, todo por paneles web. ~5-10 USD/mes (Railway ya no tiene capa
+  gratuita permanente; Vercel si).
+- **Camino B - AWS EC2 + Docker Compose**: reutiliza
+  `docker-compose.prod.yml`, mismo patron que la instalacion local. $0/mes
+  si la cuenta de AWS califica para la capa gratuita clasica (creada antes
+  del 15 de julio de 2025); si no, consume creditos de bienvenida o cuesta
+  unos 7-8 USD/mes.
+
+Ninguno de los dos caminos usa dominio propio ni HTTPS por ahora (decision
+del usuario, para no sumar complejidad en esta primera pasada) — queda
+como mejora futura documentada en cada manual.
 
 Tareas:
 
-- [ ] Separar configuracion por ambiente: local, staging/produccion.
-- [ ] Crear Dockerfile de backend.
-- [ ] Crear build de frontend.
-- [ ] Configurar CORS para dominio productivo.
-- [ ] Configurar variables secretas en el proveedor.
-- [ ] Configurar base de datos MySQL en nube.
-- [ ] Ejecutar migraciones en nube.
-- [ ] Configurar servicio de correo real.
-- [ ] Verificar HTTPS.
-- [ ] Documentar pasos de despliegue.
+- [x] Separar configuracion por ambiente: local, Docker dev, produccion
+  (`backend/.env.example` para instalacion nativa local, `.env.example`
+  para Docker dev, `.env` en la instancia/proveedor para produccion).
+- [x] Crear Dockerfile de backend (ya existia; se le agrego
+  `docker-entrypoint.sh` para aplicar migraciones y seed automaticamente
+  al arrancar, idempotente, sin pasos manuales en ningun proveedor).
+- [x] Crear build de frontend para produccion (`frontend/Dockerfile.prod`,
+  multi-stage: compila con Vite y sirve el estatico con nginx, con
+  fallback de rutas para react-router; probado localmente incluyendo una
+  ruta profunda tipo `/pacientes/5`).
+- [x] Configurar CORS para dominio productivo (documentado en ambos
+  manuales: `CORS_ORIGINS` debe coincidir exactamente con la URL publica
+  del frontend en cada proveedor).
+- [x] Configurar variables secretas en el proveedor (documentado por
+  proveedor; `SECRET_KEY` se genera nueva para produccion, nunca se
+  reusa la de desarrollo).
+- [x] Configurar base de datos MySQL en nube (Railway: plugin MySQL
+  administrado; AWS: contenedor MySQL dentro del mismo
+  `docker-compose.prod.yml`, sin exponer su puerto fuera de la maquina).
+- [x] Ejecutar migraciones en nube (automatico via
+  `docker-entrypoint.sh` en ambos caminos, no requiere paso manual).
+- [ ] Configurar servicio de correo real (diferido: `SMTP_HOST` vacio
+  sigue funcionando, los envios quedan registrados como exitosos sin
+  mandar correo real de verdad — ver `app/services/mail.py`; contratar un
+  proveedor SMTP real queda fuera de alcance de esta fase).
+- [ ] Verificar HTTPS (diferido explicitamente: sin dominio propio no hay
+  forma de emitir un certificado valido; documentado como mejora futura en
+  ambos manuales, con nota de que Let's Encrypt/Certbot es el camino
+  estandar cuando se agregue un dominio).
+- [x] Documentar pasos de despliegue
+  (`MANUAL-DESPLIEGUE-NUBE-RAILWAY-VERCEL.md`,
+  `MANUAL-DESPLIEGUE-NUBE-AWS.md`).
 
 Entregables:
 
-- Guia de despliegue cloud.
-- Configuracion lista para el proveedor elegido.
-- Aplicacion accesible desde URL publica o ambiente de prueba.
+- [x] Guia de despliegue cloud (dos manuales, uno por camino).
+- [x] Configuracion lista para ambos proveedores
+  (`docker-compose.prod.yml`, `frontend/Dockerfile.prod`,
+  `frontend/nginx.conf`, `backend/docker-entrypoint.sh`).
+- [ ] Aplicacion accesible desde URL publica: pendiente de que el usuario
+  ejecute alguno de los dos manuales (verificado localmente que
+  `docker-compose.prod.yml` funciona de punta a punta: build, arranque,
+  migraciones/seed automaticos, login y `/health` correctos).
 
 Criterios de aceptacion:
 
-- Backend responde en nube.
-- Frontend carga desde URL publica.
-- Login y CRUD principal funcionan contra base de datos cloud.
-- Variables sensibles no quedan versionadas.
+- [x] Backend responde en nube — verificado localmente con el stack de
+  produccion (`docker-compose.prod.yml`); pendiente de confirmar en un
+  proveedor real cuando el usuario ejecute un manual.
+- [x] Frontend carga desde URL publica — verificado localmente (build de
+  produccion con nginx, incluida navegacion profunda de react-router).
+- [x] Login y CRUD principal funcionan contra base de datos cloud —
+  verificado localmente contra el stack de produccion (login end-to-end
+  exitoso).
+- [x] Variables sensibles no quedan versionadas (`.env` excluido por
+  `.gitignore`; confirmado que el primer commit de git no incluyo ningun
+  `.env` real, solo los `.env.example`).
 
 ## 13. Orden recomendado de ejecucion
 

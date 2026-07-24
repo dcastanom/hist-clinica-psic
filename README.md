@@ -68,3 +68,16 @@ cd frontend
 npm install
 npm run dev
 ```
+
+## Despliegue en la nube
+
+Dos caminos disponibles, segun preferencias de costo y curva de
+aprendizaje (ver comparacion de precios dentro de cada manual):
+
+- `MANUAL-DESPLIEGUE-NUBE-RAILWAY-VERCEL.md`: el mas simple, todo por
+  paneles web (Railway para backend + MySQL, Vercel para el frontend).
+  Costo aproximado 5-10 USD/mes.
+- `MANUAL-DESPLIEGUE-NUBE-AWS.md`: EC2 + Docker Compose (reutiliza
+  `docker-compose.prod.yml`), el mismo patron que la instalacion local
+  pero en una maquina virtual en AWS. Costo depende de la elegibilidad de
+  Free Tier de la cuenta de AWS (puede ser $0/mes).
