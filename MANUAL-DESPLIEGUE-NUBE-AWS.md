@@ -75,8 +75,7 @@ que sepas que esperar en tu primera factura.
      navegador y no hace falta usarlo directamente).
 7. **Network settings**: click en "Edit" y configura el grupo de
    seguridad (firewall) con estas reglas:
-   - SSH, puerto 22, origen: **"My IP"** (para que solo tu computador
-     pueda conectarse por SSH).
+   - SSH, puerto 22, origen: **"Anywhere-IPv4" (`0.0.0.0/0`)**.
    - Agrega una regla: HTTP, puerto 80, origen: **Anywhere (0.0.0.0/0)**
      (para que cualquiera pueda ver el frontend).
    - Agrega otra regla: **Custom TCP**, puerto **8000**, origen:
@@ -84,6 +83,20 @@ que sepas que esperar en tu primera factura.
      backend).
    - No abras el puerto 3306 (MySQL) — no hace falta, MySQL solo lo usa el
      backend internamente en la misma maquina.
+
+   > **Por que "Anywhere" y no "My IP" en el puerto 22**: el boton
+   > "Connect" -> "EC2 Instance Connect" del navegador (que usamos en el
+   > Paso 3) no se conecta desde tu propia IP, sino desde infraestructura
+   > interna de AWS. Si restringes el puerto 22 a "My IP", esa conexion
+   > queda bloqueada por el firewall y vas a ver el error
+   > *"Error establishing SSH connection to your instance. Try again
+   > later."* aunque la instancia este perfectamente sana (asi se
+   > descubrio este detalle: revisando el log de arranque, que se veia
+   > limpio, mientras la conexion seguia fallando). Si mas adelante
+   > prefieres mantener el puerto 22 restringido a tu IP por seguridad,
+   > podes hacerlo, pero entonces hay que conectarse con un cliente SSH
+   > normal (ej. `ssh -i hist-clinica-key.pem ec2-user@TU-IP-PUBLICA` desde
+   > PowerShell) en vez del boton del navegador.
 8. **Configure storage**: sube el tamano a **20 GB** (la capa gratuita
    cubre hasta 30 GB; el valor por defecto de 8 GB queda muy justo con las
    imagenes de Docker).
@@ -284,10 +297,22 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 ## Solucion de problemas comunes
 
-**No puedo conectarme con "EC2 Instance Connect"**
-Revisa que la regla de seguridad SSH (puerto 22) permita tu IP actual — si
-tu IP de internet cambio desde que creaste la instancia, edita el grupo de
-seguridad y actualiza el origen de esa regla a "My IP" de nuevo.
+**"Failed to connect to your instance" / "Error establishing SSH
+connection to your instance. Try again later."**
+Con el "Status check" en "2/2 checks passed" (o "3/3") y el log de
+arranque (Actions -> Monitor and troubleshoot -> Get system log) sin
+errores visibles, esto casi siempre es el grupo de seguridad: el puerto 22
+tiene que permitir **"Anywhere-IPv4" (`0.0.0.0/0`)**, no "My IP" — el boton
+"EC2 Instance Connect" del navegador no se conecta desde tu propia IP (ver
+la nota en el Paso 2). Edita la regla SSH del grupo de seguridad y
+vuelve a intentar.
+
+Si el log de arranque SI muestra un error real (mas alla del warning
+inofensivo de "SSM Agent unable to acquire credentials", que es normal y
+no afecta SSH), o si el chequeo de estado se queda mucho tiempo en
+"Initializing" (mas de 5 minutos), lo mas rapido suele ser terminar la
+instancia y crear una nueva (Paso 2), probando una zona de disponibilidad
+distinta en "Network settings" -> "Subnet".
 
 **`docker compose up` falla o el contenedor del backend se reinicia solo**
 Revisa los logs: `docker compose -f docker-compose.prod.yml logs backend`.
