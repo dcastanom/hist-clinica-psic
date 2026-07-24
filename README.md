@@ -1,1 +1,0 @@
-# hist-clinica-psic
