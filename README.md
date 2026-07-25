@@ -1,12 +1,14 @@
 # Historia Clinica Psicologica
 
-Aplicacion multi-tenant para gestion de historias clinicas psicologicas.
+Aplicacion multi-tenant para gestion de historias clínicas psicológicas. El frontend es realizado con React y la API backend con FAST-API usando bases de datos mysql.
+Esta aplicación fue construida con claude code usando técnicas de spec-driven-development e incluye 3 formas de instalaciòn especificadas en los manuales: local, usando Railway y Vercel, y en AWS EC2.
 
 Documentos base:
 
 - `REQUERIMIENTOS.md`: requerimientos iniciales.
 - `ANALISIS.md`: analisis aprobado y modelo de datos.
 - `PLANIFICACION.md`: fases de implementacion y seguimiento.
+- `CONTROLES-DE-CAMBIOS.md`: cambios reaizados despues de la primera versión.
 
 ## Instalacion local sin Docker (usuarios finales)
 
